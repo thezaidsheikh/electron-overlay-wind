@@ -53,14 +53,14 @@ function createWindow () {
   `)
 
   // NOTE: if you close Dev Tools overlay window will lose transparency
-  window.webContents.openDevTools({ mode: 'detach', activate: false })
+  // window.webContents.openDevTools({ mode: 'detach', activate: false })
 
   makeDemoInteractive()
 
   OverlayController.attachByTitle(
     window,
-    process.platform === 'darwin' ? 'Untitled' : 'Notepad',
-    { hasTitleBarOnMac: true }
+    process.platform === 'darwin' ? 'Activity Monitor' : 'Notepad',
+    { hasTitleBarOnMac: false }
   )
 }
 
