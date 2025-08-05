@@ -1,13 +1,13 @@
 {
-  "name": "electron-overlay-window",
+  "name": "electron-overlay-wind",
   "version": "1.1.1",
   "author": {
     "name": "Zaid Qureshi",
-    "contributors":["Alexander Drozdov"]
+    "contributors": ["Alexander Drozdov"]
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/SnosMe/electron-overlay-window.git"
+    "url": "https://github.com/thezaidsheikh/electron-overlay-wind.git"
   },
   "license": "MIT",
   "keywords": [
@@ -22,8 +22,14 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "install": "node-gyp-build",
+    "start:dev": "pnpm run build:dev && pnpm run demo:electron",
+    "build": "tsc",
+    "build:dev": "tsc --sourceMap",
+    "build:prod": "tsc --sourceMap false",
+    "clean": "rm -rf dist prebuilds build",
     "prebuild": "prebuildify --napi",
-    "demo:electron": "node-gyp rebuild && pnpm tsc && electron dist/demo/electron-demo.js"
+    "demo:electron": "node-gyp rebuild && tsc && electron dist/demo/electron-demo.js",
+    "deploy": "./scripts/deploy.sh"
   },
   "files": [
     "dist/index.d.ts",

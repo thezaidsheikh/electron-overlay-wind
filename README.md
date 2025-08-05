@@ -1,6 +1,6 @@
-# 🪟 electron-overlay-window
+# 🪟 electron-overlay-wind
 
-[![](https://img.shields.io/npm/v/electron-overlay-window/latest?color=CC3534&label=electron-overlay-window&logo=npm&labelColor=212121)](https://www.npmjs.com/package/electron-overlay-window)
+[![](https://img.shields.io/npm/v/electron-overlay-wind/latest?color=CC3534&label=electron-overlay-wind&logo=npm&labelColor=212121)](https://www.npmjs.com/package/electron-overlay-wind)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
 ## 📋 Overview
@@ -24,18 +24,18 @@ Alexander Drozdov
 ## 📦 Installation
 
 ```bash
-npm install electron-overlay-window
+npm install electron-overlay-wind
 # or
-yarn add electron-overlay-window
+yarn add electron-overlay-wind
 # or
-pnpm add electron-overlay-window
+pnpm add electron-overlay-wind
 ```
 
 ## 🚀 Quick Start
 
 ```javascript
 const { app, BrowserWindow } = require('electron');
-const { OverlayController, OVERLAY_WINDOW_OPTS } = require('electron-overlay-window');
+const { OverlayController, OVERLAY_WINDOW_OPTS } = require('electron-overlay-wind');
 
 app.whenReady().then(() => {
   // Create an overlay window with recommended options
