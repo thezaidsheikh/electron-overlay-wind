@@ -1,8 +1,9 @@
 {
   "name": "electron-overlay-window",
-  "version": "3.3.0",
+  "version": "1.1.1",
   "author": {
-    "name": "Alexander Drozdov"
+    "name": "Zaid Qureshi",
+    "contributors":["Alexander Drozdov"]
   },
   "repository": {
     "type": "git",
@@ -22,7 +23,7 @@
   "scripts": {
     "install": "node-gyp-build",
     "prebuild": "prebuildify --napi",
-    "demo:electron": "node-gyp rebuild && yarn tsc && electron dist/demo/electron-demo.js"
+    "demo:electron": "node-gyp rebuild && pnpm tsc && electron dist/demo/electron-demo.js"
   },
   "files": [
     "dist/index.d.ts",

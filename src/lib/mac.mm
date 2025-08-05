@@ -505,9 +505,22 @@ static void checkAndHandleWindow(pid_t pid, AXUIElementRef frontmostWindow) {
 
   // For the rest of this function, only run if the title matches
   NSString *title = getTitleForWindow(frontmostWindow);
-  if (!title || ![title isEqualToString:@(targetInfo.title)]) {
+  // NSLog(@"Checking window title: '%@' against target: '%s'", title, targetInfo.title);
+  NSRange lastDashRange = [title rangeOfString:@" – " options:NSBackwardsSearch];
+  if (lastDashRange.location == NSNotFound) {
+      lastDashRange = [title rangeOfString:@" - " options:NSBackwardsSearch];
+  }
+
+  NSString *titleToCheck = title;
+  if (lastDashRange.location != NSNotFound) {
+    titleToCheck = [title substringToIndex:lastDashRange.location];
+}
+  if (!title || (![title isEqualToString:@(targetInfo.title)] && 
+               ![titleToCheck isEqualToString:@(targetInfo.title)])) {
+    // NSLog(@"Title doesn't match, skipping");
     return;
   }
+  // NSLog(@"Title matches! Processing attachment");
 
   // Emit size changes if the window is currently frontmost. This is helpful
   // to ensure the size updates after we go fullscreen, since the size takes
