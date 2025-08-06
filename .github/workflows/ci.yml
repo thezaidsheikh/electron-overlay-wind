@@ -46,7 +46,7 @@ jobs:
           path: prebuilds
 
   prebuild-darwin:
-    runs-on: macos-latest
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
