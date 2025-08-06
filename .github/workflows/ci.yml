@@ -10,8 +10,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-      - run: yarn --frozen-lockfile
-      - run: yarn prebuild
+      - run: pnpm --frozen-lockfile
+      - run: pnpm prebuild
       - uses: actions/upload-artifact@v4
         with:
           name: windows
@@ -25,21 +25,21 @@ jobs:
       - run: |
           sudo apt-get update
           sudo apt-get install -y libxcb1-dev
-      - run: yarn --frozen-lockfile
-      - run: yarn prebuild
+      - run: pnpm --frozen-lockfile
+      - run: pnpm prebuild
       - uses: actions/upload-artifact@v4
         with:
           name: linux
           path: prebuilds
 
   prebuild-darwin:
-    runs-on: macos-latest
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-      - run: yarn --frozen-lockfile
-      - run: yarn prebuild --arch x64
-      - run: yarn prebuild --arch arm64
+      - run: pnpm --frozen-lockfile
+      - run: pnpm prebuild --arch x64
+      - run: pnpm prebuild --arch arm64
       - uses: actions/upload-artifact@v4
         with:
           name: darwin
@@ -66,8 +66,8 @@ jobs:
           name: darwin
           path: prebuilds
       - uses: actions/setup-node@v4
-      - run: yarn --frozen-lockfile --ignore-scripts
-      - run: yarn tsc
+      - run: pnpm --frozen-lockfile --ignore-scripts
+      - run: pnpm tsc
       - run: npm pack
       - uses: actions/upload-artifact@v4
         with:
