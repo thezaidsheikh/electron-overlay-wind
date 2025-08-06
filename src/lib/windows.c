@@ -8,6 +8,13 @@
 
 #define OW_FOREGROUND_TIMER_MS 83 // 12 fps
 
+static uv_thread_t hook_tid;
+static DWORD hook_thread_id = 0;
+
+static HWINEVENTHOOK fg_hook = NULL;
+static HWINEVENTHOOK min_hook = NULL;
+static UINT_PTR fg_timer = 0;
+
 struct ow_target_window
 {
   char* title;
@@ -309,15 +316,17 @@ static VOID CALLBACK foreground_timer_proc(HWND _hwnd, UINT msg, UINT_PTR timerI
 }
 
 static void hook_thread(void* _arg) {
-  SetWinEventHook(
+  hook_thread_id = GetCurrentThreadId();
+
+  fg_hook = SetWinEventHook(
     EVENT_SYSTEM_FOREGROUND, EVENT_SYSTEM_FOREGROUND,
     NULL, hook_proc, 0, 0, WINEVENT_OUTOFCONTEXT);
-  SetWinEventHook(
+  min_hook = SetWinEventHook(
     EVENT_SYSTEM_MINIMIZEEND, EVENT_SYSTEM_MINIMIZEEND,
     NULL, hook_proc, 0, 0, WINEVENT_OUTOFCONTEXT);
   // FIXES: ForegroundLockTimeout (even when = 0); Also edge cases when apps stealing FG window.
   // NOTE:  Using timer because WH_SHELL & WH_CBT hooks require dll injection
-  SetTimer(NULL, 0, OW_FOREGROUND_TIMER_MS, foreground_timer_proc);
+  fg_timer = SetTimer(NULL, 0, OW_FOREGROUND_TIMER_MS, foreground_timer_proc);
 
   foreground_window = GetForegroundWindow();
   if (foreground_window != NULL) {
@@ -333,6 +342,23 @@ static void hook_thread(void* _arg) {
     TranslateMessage(&message);
     DispatchMessageW(&message);
   }
+
+  if (fg_hook) {
+    UnhookWinEvent(fg_hook);
+    fg_hook = NULL;
+  }
+  if (min_hook) {
+    UnhookWinEvent(min_hook);
+    min_hook = NULL;
+  }
+  if (fg_timer) {
+    KillTimer(NULL, fg_timer);
+    fg_timer = 0;
+  }
+  if (fg_window_namechange_hook) {
+    UnhookWinEvent(fg_window_namechange_hook);
+    fg_window_namechange_hook = NULL;
+  }
 }
 
 void ow_start_hook(char* target_window_title, void* overlay_window_id) {
@@ -342,6 +368,31 @@ void ow_start_hook(char* target_window_title, void* overlay_window_id) {
   }
   WM_OVERLAY_UIPI_TEST = RegisterWindowMessage("ELECTRON_OVERLAY_UIPI_TEST");
   uv_thread_create(&hook_tid, hook_thread, NULL);
+}
+
+void ow_stop_hook() {
+  if (hook_thread_id != 0) {
+    PostThreadMessage(hook_thread_id, WM_QUIT, 0, 0);
+    uv_thread_join(&hook_tid);
+    hook_thread_id = 0;
+  }
+
+  if (fg_hook) {
+    UnhookWinEvent(fg_hook);
+    fg_hook = NULL;
+  }
+  if (min_hook) {
+    UnhookWinEvent(min_hook);
+    min_hook = NULL;
+  }
+  if (fg_timer) {
+    KillTimer(NULL, fg_timer);
+    fg_timer = 0;
+  }
+  if (fg_window_namechange_hook) {
+    UnhookWinEvent(fg_window_namechange_hook);
+    fg_window_namechange_hook = NULL;
+  }
 }
 
 void ow_activate_overlay() {

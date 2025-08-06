@@ -1,24 +1,24 @@
-import { app, BrowserWindow, globalShortcut } from 'electron'
-import { OverlayController, OVERLAY_WINDOW_OPTS } from '../'
+import { app, BrowserWindow, globalShortcut } from "electron";
+import { OverlayController, OVERLAY_WINDOW_OPTS } from "../";
 
 // https://github.com/electron/electron/issues/25153
-app.disableHardwareAcceleration()
+app.disableHardwareAcceleration();
 
-let window: BrowserWindow
+let window: BrowserWindow;
 
-const toggleMouseKey = 'CmdOrCtrl + J'
-const toggleShowKey = 'CmdOrCtrl + K'
+const toggleMouseKey = "CmdOrCtrl + J";
+const toggleShowKey = "CmdOrCtrl + K";
 
-function createWindow () {
+function createWindow() {
   window = new BrowserWindow({
     width: 400,
     height: 300,
     webPreferences: {
       nodeIntegration: true,
-      contextIsolation: false
+      contextIsolation: false,
     },
-    ...OVERLAY_WINDOW_OPTS
-  })
+    ...OVERLAY_WINDOW_OPTS,
+  });
 
   window.loadURL(`data:text/html;charset=utf-8,
     <head>
@@ -50,50 +50,52 @@ function createWindow () {
         });
       </script>
     </body>
-  `)
+  `);
 
   // NOTE: if you close Dev Tools overlay window will lose transparency
   // window.webContents.openDevTools({ mode: 'detach', activate: false })
 
-  makeDemoInteractive()
+  makeDemoInteractive();
 
-  OverlayController.attachByTitle(
-    window,
-    process.platform === 'darwin' ? 'Activity Monitor' : 'Notepad',
-    { hasTitleBarOnMac: false }
-  )
+  OverlayController.attachByTitle(window, process.platform === "darwin" ? "Activity Monitor" : "Notepad", { hasTitleBarOnMac: false });
+
+  OverlayController.events.on("detach", () => {
+    console.log("detach");
+    OverlayController.stop();
+    window.close();
+  });
 }
 
-function makeDemoInteractive () {
-  let isInteractable = false
+function makeDemoInteractive() {
+  let isInteractable = false;
 
-  function toggleOverlayState () {
+  function toggleOverlayState() {
     if (isInteractable) {
-      isInteractable = false
-      OverlayController.focusTarget()
-      window.webContents.send('focus-change', false)
+      isInteractable = false;
+      OverlayController.focusTarget();
+      window.webContents.send("focus-change", false);
     } else {
-      isInteractable = true
-      OverlayController.activateOverlay()
-      window.webContents.send('focus-change', true)
+      isInteractable = true;
+      OverlayController.activateOverlay();
+      window.webContents.send("focus-change", true);
     }
   }
 
-  window.on('blur', () => {
-    isInteractable = false
-    window.webContents.send('focus-change', false)
-  })
+  window.on("blur", () => {
+    isInteractable = false;
+    window.webContents.send("focus-change", false);
+  });
 
-  globalShortcut.register(toggleMouseKey, toggleOverlayState)
+  globalShortcut.register(toggleMouseKey, toggleOverlayState);
 
   globalShortcut.register(toggleShowKey, () => {
-    window.webContents.send('visibility-change', false)
-  })
+    window.webContents.send("visibility-change", false);
+  });
 }
 
-app.on('ready', () => {
+app.on("ready", () => {
   setTimeout(
     createWindow,
-    process.platform === 'linux' ? 1000 : 0 // https://github.com/electron/electron/issues/16809
-  )
-})
+    process.platform === "linux" ? 1000 : 0 // https://github.com/electron/electron/issues/16809
+  );
+});

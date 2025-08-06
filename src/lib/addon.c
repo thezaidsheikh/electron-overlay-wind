@@ -196,6 +196,24 @@ napi_value AddonStart(napi_env env, napi_callback_info info) {
   return NULL;
 }
 
+// Add stop function declaration
+napi_value AddonStop(napi_env env, napi_callback_info info) {
+  napi_status status;
+  
+  // Release threadsafe function
+  if (threadsafe_fn != NULL) {
+    status = napi_release_threadsafe_function(threadsafe_fn, napi_tsfn_release);
+    if (status == napi_ok) {
+      threadsafe_fn = NULL;
+    }
+  }
+  
+  // Call platform-specific stop function
+  ow_stop_hook();
+  
+  return NULL;
+}
+
 napi_value AddonActivateOverlay(napi_env _env, napi_callback_info _info) {
   ow_activate_overlay();
   return NULL;
@@ -251,6 +269,11 @@ NAPI_MODULE_INIT() {
   status = napi_set_named_property(env, exports, "screenshot", export_fn);
   NAPI_FATAL_IF_FAILED(status, "NAPI_MODULE_INIT", "napi_set_named_property");
 
+  status = napi_create_function(env, NULL, 0, AddonStop, NULL, &export_fn);
+  NAPI_FATAL_IF_FAILED(status, "NAPI_MODULE_INIT", "napi_set_named_property");
+  status = napi_set_named_property(env, exports, "stop", export_fn);
+  NAPI_FATAL_IF_FAILED(status, "NAPI_MODULE_INIT", "napi_set_named_property");
+  
   status = napi_add_env_cleanup_hook(env, AddonCleanUp, NULL);
   NAPI_FATAL_IF_FAILED(status, "NAPI_MODULE_INIT", "napi_add_env_cleanup_hook");
 
