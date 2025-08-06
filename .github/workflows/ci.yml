@@ -10,7 +10,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-      - run: pnpm --frozen-lockfile
+        with:
+          node-version: "18"
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: latest
+      - run: pnpm install --frozen-lockfile
       - run: pnpm prebuild
       - uses: actions/upload-artifact@v4
         with:
@@ -22,10 +28,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-      - run: |
+        with:
+          node-version: "18"
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: latest
+      - name: Install system dependencies
+        run: |
           sudo apt-get update
           sudo apt-get install -y libxcb1-dev
-      - run: pnpm --frozen-lockfile
+      - run: pnpm install --frozen-lockfile
       - run: pnpm prebuild
       - uses: actions/upload-artifact@v4
         with:
@@ -37,7 +50,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-      - run: pnpm --frozen-lockfile
+        with:
+          node-version: "18"
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: latest
+      - run: pnpm install --frozen-lockfile
       - run: pnpm prebuild --arch x64
       - run: pnpm prebuild --arch arm64
       - uses: actions/upload-artifact@v4
@@ -66,11 +85,17 @@ jobs:
           name: darwin
           path: prebuilds
       - uses: actions/setup-node@v4
-      - run: pnpm --frozen-lockfile --ignore-scripts
+        with:
+          node-version: "18"
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: latest
+      - run: pnpm install --frozen-lockfile --ignore-scripts
       - run: pnpm tsc
       - run: npm pack
       - uses: actions/upload-artifact@v4
         with:
           name: package
-          path: electron-overlay-window-*.tgz
+          path: electron-overlay-wind-*.tgz
           retention-days: 3
