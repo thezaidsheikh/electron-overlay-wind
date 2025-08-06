@@ -43,6 +43,8 @@ static struct ow_overlay_window overlay_info = {
   .window_id = XCB_WINDOW_NONE
 };
 
+static uv_thread_t hook_tid;
+
 static xcb_window_t get_active_window() {
   xcb_get_property_reply_t* prop_reply = xcb_get_property_reply(x_conn, xcb_get_property(x_conn, 0, root, ATOM_NET_ACTIVE_WINDOW, XCB_ATOM_WINDOW, 0, 1), NULL);
   if (prop_reply == NULL) {
@@ -319,6 +321,14 @@ void ow_start_hook(char* target_window_title, void* overlay_window_id) {
     overlay_info.window_id = *((xcb_window_t*)overlay_window_id);
   }
   uv_thread_create(&hook_tid, hook_thread, NULL);
+}
+
+void ow_stop_hook() {
+  if (x_conn) {
+    xcb_disconnect(x_conn);
+    x_conn = NULL;
+  }
+  uv_thread_join(&hook_tid);
 }
 
 void ow_activate_overlay() {

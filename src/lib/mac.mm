@@ -32,6 +32,9 @@ AXError _AXUIElementGetWindow(AXUIElementRef, CGWindowID *out);
 
 static void checkAndHandleWindow(pid_t pid, AXUIElementRef frontmostWindow);
 
+static uv_thread_t hook_tid;
+static CFRunLoopRef hook_thread_run_loop = NULL;
+
 struct ow_target_window {
   const char *title;
   /** Set to -1 if not initialized yet */
@@ -82,6 +85,9 @@ static struct ow_overlay_window overlayInfo = {.window = NULL};
  */
 static struct ow_frontmost_app frontmostInfo = {
     .pid = -1, .windowID = 0, .element = NULL, .observer = NULL};
+
+static id spaceChangeObserver = NULL;
+static id appActivateObserver = NULL;
 
 static OWFullscreenObserver *fullscreenObserver = NULL;
 
@@ -603,7 +609,7 @@ static void observeFullscreen() {
            options:NSKeyValueObservingOptionNew
            context:NULL];
 
-  [[[NSWorkspace sharedWorkspace] notificationCenter]
+  spaceChangeObserver = [[[NSWorkspace sharedWorkspace] notificationCenter]
       addObserverForName:NSWorkspaceActiveSpaceDidChangeNotification
                   object:NULL
                    queue:NULL
@@ -621,7 +627,7 @@ static void observeFullscreen() {
  * information update much more quickly too.
  */
 static void observeActivateApplication() {
-  [[[NSWorkspace sharedWorkspace] notificationCenter]
+  appActivateObserver = [[[NSWorkspace sharedWorkspace] notificationCenter]
       addObserverForName:NSWorkspaceDidActivateApplicationNotification
                   object:NULL
                    queue:NULL
@@ -638,6 +644,8 @@ static void observeActivateApplication() {
  * loop.
  */
 static void hookThread(void *_arg) {
+  hook_thread_run_loop = CFRunLoopGetCurrent();
+
   observeFullscreen();
   observeActivateApplication();
   waitUntilAccessibilityGranted();
@@ -646,6 +654,35 @@ static void hookThread(void *_arg) {
   // Start the RunLoop so that our AXObservers added by CFRunLoopAddSource
   // work properly
   CFRunLoopRun();
+}
+
+static void cleanupObservers() {
+  if (latestTimer) {
+    [latestTimer invalidate];
+    latestTimer = NULL;
+  }
+
+  if (fullscreenObserver) {
+    NSApplication *app = [NSApplication sharedApplication];
+    [app removeObserver:fullscreenObserver
+             forKeyPath:@"currentSystemPresentationOptions"];
+    fullscreenObserver = NULL;
+  }
+
+  if (spaceChangeObserver) {
+    [[[NSWorkspace sharedWorkspace] notificationCenter]
+        removeObserver:spaceChangeObserver];
+    spaceChangeObserver = NULL;
+  }
+
+  if (appActivateObserver) {
+    [[[NSWorkspace sharedWorkspace] notificationCenter]
+        removeObserver:appActivateObserver];
+    appActivateObserver = NULL;
+  }
+
+  clearWindowInfo(targetInfo, windowNotificationTypes);
+  clearWindowInfo(frontmostInfo, appFocusNotificationTypes);
 }
 
 void ow_start_hook(char *target_window_title, void *overlay_window_id) {
@@ -658,6 +695,17 @@ void ow_start_hook(char *target_window_title, void *overlay_window_id) {
   }
 
   uv_thread_create(&hook_tid, hookThread, NULL);
+}
+
+void ow_stop_hook() {
+  if (hook_thread_run_loop) {
+    CFRunLoopStop(hook_thread_run_loop);
+    hook_thread_run_loop = NULL;
+  }
+
+  uv_thread_join(&hook_tid);
+
+  cleanupObservers();
 }
 
 void ow_activate_overlay() {
