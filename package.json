@@ -1,9 +1,11 @@
 {
   "name": "electron-overlay-wind",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "author": {
     "name": "Zaid Qureshi",
-    "contributors": ["Alexander Drozdov"]
+    "contributors": [
+      "Alexander Drozdov"
+    ]
   },
   "repository": {
     "type": "git",
@@ -26,7 +28,7 @@
     "build": "tsc",
     "build:dev": "tsc --sourceMap",
     "build:prod": "tsc --sourceMap false",
-    "clean": "rm -rf dist prebuilds build",
+    "clean": "rm -rf dist build",
     "prebuild": "prebuildify --napi",
     "demo:electron": "node-gyp rebuild && tsc && electron dist/demo/electron-demo.js",
     "deploy": "./scripts/deploy.sh"

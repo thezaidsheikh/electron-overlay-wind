@@ -52,8 +52,8 @@ print_status "Building production version..."
 pnpm run build:prod
 
 # Create prebuilds
-print_status "Creating prebuilds..."
-pnpm run prebuild
+# print_status "Creating prebuilds..."
+# pnpm run prebuild
 
 # Run tests (if available)
 print_status "Running tests..."
