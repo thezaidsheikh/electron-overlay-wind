@@ -88,5 +88,5 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: package
-          path: electron-overlay-window-*.tgz
+          path: electron-overlay-wind-*.tgz
           retention-days: 3
