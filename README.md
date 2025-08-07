@@ -34,8 +34,8 @@ pnpm add electron-overlay-wind
 ## 🚀 Quick Start
 
 ```javascript
-const { app, BrowserWindow } = require('electron');
-const { OverlayController, OVERLAY_WINDOW_OPTS } = require('electron-overlay-wind');
+const { app, BrowserWindow } = require("electron");
+const { OverlayController, OVERLAY_WINDOW_OPTS } = require("electron-overlay-wind");
 
 app.whenReady().then(() => {
   // Create an overlay window with recommended options
@@ -44,17 +44,17 @@ app.whenReady().then(() => {
     width: 800,
     height: 600,
     webPreferences: {
-      nodeIntegration: true
-    }
+      nodeIntegration: true,
+    },
   });
 
   // Load your overlay content
-  overlay.loadFile('index.html');
+  overlay.loadFile("index.html");
 
   // Attach to a target window by title
   OverlayController.attachByTitle(
     overlay,
-    'Target Window Title', // e.g., 'Notepad' on Windows or 'Activity Monitor' on macOS
+    "Target Window Title", // e.g., 'Notepad' on Windows or 'Activity Monitor' on macOS
     { hasTitleBarOnMac: true } // Options
   );
 });
@@ -62,7 +62,6 @@ app.whenReady().then(() => {
 
 ## 📝 Important Notes
 
-- ⚠️ You can initialize the library only once per application
 - ⚠️ You can have only one overlay window at a time
 - ✅ Found target window remains "valid" even if its title changes after initial detection
 - ✅ Correct behavior is guaranteed only for top-level windows
@@ -95,6 +94,10 @@ Restores focus to the target window and makes the overlay click-through.
 
 ##### `screenshot()` (Windows only)
 
+##### `stop()`
+
+Stops the overlay and detaches it from the target window.
+
 Captures a screenshot of the target window. Returns a Buffer suitable for use with `nativeImage.createFromBitmap`.
 
 #### Events
@@ -121,7 +124,7 @@ const OVERLAY_WINDOW_OPTS = {
   transparent: true,
   resizable: true,
   hasShadow: false, // on macOS
-  alwaysOnTop: true // on macOS
+  alwaysOnTop: true, // on macOS
 };
 ```
 
@@ -166,36 +169,41 @@ This will build and run a demo app that demonstrates the overlay functionality. 
 ## 🛠️ Tech Stack & Tools
 
 ### Core Dependencies
+
 - **Node.js**: >= 16.0.0
 - **Electron**: >= 18.0.0 (peer dependency)
 - **TypeScript**: 5.x.x
 - **N-API**: Native addon API
 
 ### Build Tools
+
 - **node-gyp**: Native module build tool
 - **node-gyp-build**: 4.x.x
 - **prebuildify**: 6.x.x (cross-platform prebuilds)
 
 ### Development Dependencies
+
 - **@types/node**: 18.x.x (TypeScript definitions)
 - **@types/throttle-debounce**: 5.x.x (TypeScript definitions)
 - **electron**: 24.x.x (development/testing)
 
 ### Runtime Dependencies
+
 - **throttle-debounce**: 5.x.x (event optimization)
 
 ### Package Manager
+
 - **pnpm**: Latest (recommended)
 - **npm**: Compatible
 - **yarn**: Compatible
 
 ### Native Build Configuration
+
 - **binding.gyp**: Cross-platform native module configuration
 - **Platform-specific compilation**:
   - Windows: Visual Studio Build Tools
   - macOS: Xcode Command Line Tools
   - Linux: GCC/G++ build essentials
-
 
 ## 📄 License
 

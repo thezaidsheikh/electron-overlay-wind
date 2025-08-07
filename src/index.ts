@@ -246,7 +246,6 @@ class OverlayControllerGlobal {
     if (this.isInitialized) {
       this.stop();
     }
-
     this.isInitialized = true;
     this.electronWindow = electronWindow;
     this.attachOptions = options;
@@ -282,9 +281,6 @@ class OverlayControllerGlobal {
       try {
         // Clean up native resources
         lib.stop();
-
-        // Clean up event listeners
-        this.events.removeAllListeners();
 
         // Hide overlay window
         this.electronWindow?.hide();

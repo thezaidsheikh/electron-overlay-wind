@@ -58,12 +58,6 @@ function createWindow() {
   makeDemoInteractive();
 
   OverlayController.attachByTitle(window, process.platform === "darwin" ? "Activity Monitor" : "Notepad", { hasTitleBarOnMac: false });
-
-  OverlayController.events.on("detach", () => {
-    console.log("detach");
-    OverlayController.stop();
-    window.close();
-  });
 }
 
 function makeDemoInteractive() {
