@@ -65,8 +65,13 @@ export const OVERLAY_WINDOW_OPTS: BrowserWindowConstructorOptions = {
 };
 
 class OverlayControllerGlobal {
+  private static _instance: OverlayControllerGlobal;
   private isInitialized = false;
   private electronWindow?: BrowserWindow;
+
+  private onBlurListener?: () => void;
+  private onFocusListener?: () => void;
+
   // Exposed so that apps can get the current bounds of the target
   // NOTE: stores screen physical rect on Windows
   targetBounds: Rectangle = { x: 0, y: 0, width: 0, height: 0 };
@@ -250,15 +255,17 @@ class OverlayControllerGlobal {
     this.electronWindow = electronWindow;
     this.attachOptions = options;
 
-    this.electronWindow?.on("blur", () => {
+    this.onBlurListener = () => {
       if (!this.targetHasFocus && this.focusNext !== "target") {
         this.electronWindow!.hide();
       }
-    });
-
-    this.electronWindow?.on("focus", () => {
+    };
+    this.onFocusListener = () => {
       this.focusNext = undefined;
-    });
+    };
+
+    this.electronWindow?.on("blur", this.onBlurListener);
+    this.electronWindow?.on("focus", this.onFocusListener);
 
     if (isMac) {
       this.calculateMacTitleBarHeight();
@@ -277,22 +284,34 @@ class OverlayControllerGlobal {
 
   // Add stop method
   stop() {
-    if (this.isInitialized) {
-      try {
-        // Clean up native resources
-        lib.stop();
-
-        // Hide overlay window
-        this.electronWindow?.hide();
-
-        // Reset state
-        this.isInitialized = false;
-        this.electronWindow = undefined;
-        this.targetHasFocus = false;
-        this.targetBounds = { x: 0, y: 0, width: 0, height: 0 };
-      } catch (error) {
-        console.error("Error stopping overlay:", error);
+    try {
+      if (this.isInitialized) {
+        try {
+          // Clean up native resources
+          lib.stop();
+          if (this.electronWindow) {
+            if (this.onBlurListener) {
+              this.electronWindow.removeListener("blur", this.onBlurListener);
+            }
+            if (this.onFocusListener) {
+              this.electronWindow.removeListener("focus", this.onFocusListener);
+            }
+            // Hide overlay window
+            this.electronWindow.hide();
+          }
+          // Reset state
+          this.isInitialized = false;
+          this.electronWindow = undefined;
+          this.onBlurListener = undefined;
+          this.onFocusListener = undefined;
+          this.targetHasFocus = false;
+          this.targetBounds = { x: 0, y: 0, width: 0, height: 0 };
+        } catch (error) {
+          console.error("Error stopping overlay:", error);
+        }
       }
+    } catch (error) {
+      console.error("Error stopping overlay catch:", error);
     }
   }
 }

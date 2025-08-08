@@ -277,5 +277,6 @@ NAPI_MODULE_INIT() {
   status = napi_add_env_cleanup_hook(env, AddonCleanUp, NULL);
   NAPI_FATAL_IF_FAILED(status, "NAPI_MODULE_INIT", "napi_add_env_cleanup_hook");
 
+  ow_init();
   return exports;
 }

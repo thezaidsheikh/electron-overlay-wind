@@ -4,6 +4,7 @@
 #import <ApplicationServices/ApplicationServices.h>
 #import <Foundation/Foundation.h>
 #import <array>
+#import <uv.h>
 
 /**
  * FORMATTING: This file was formatted automatically with clang-format.
@@ -34,6 +35,8 @@ static void checkAndHandleWindow(pid_t pid, AXUIElementRef frontmostWindow);
 
 static uv_thread_t hook_tid;
 static CFRunLoopRef hook_thread_run_loop = NULL;
+static uv_mutex_t hook_mutex;
+static bool hook_running = false;
 
 struct ow_target_window {
   const char *title;
@@ -639,23 +642,6 @@ static void observeActivateApplication() {
               }];
 }
 
-/**
- * Initializes listeners for the frontmost window, and then starts the event
- * loop.
- */
-static void hookThread(void *_arg) {
-  hook_thread_run_loop = CFRunLoopGetCurrent();
-
-  observeFullscreen();
-  observeActivateApplication();
-  waitUntilAccessibilityGranted();
-  handleFocusMaybeChanged();
-
-  // Start the RunLoop so that our AXObservers added by CFRunLoopAddSource
-  // work properly
-  CFRunLoopRun();
-}
-
 static void cleanupObservers() {
   if (latestTimer) {
     [latestTimer invalidate];
@@ -683,9 +669,56 @@ static void cleanupObservers() {
 
   clearWindowInfo(targetInfo, windowNotificationTypes);
   clearWindowInfo(frontmostInfo, appFocusNotificationTypes);
+
+  // Resetting the structs to their initial state
+  targetInfo = {.title = NULL,
+                .pid = -1,
+                .element = NULL,
+                .observer = NULL,
+                .isFocused = false,
+                .isFullscreen = false};
+  frontmostInfo = {
+      .pid = -1, .windowID = 0, .element = NULL, .observer = NULL};
+}
+
+/**
+ * Initializes listeners for the frontmost window, and then starts the event
+ * loop.
+ */
+static void hookThread(void *_arg) {
+  hook_thread_run_loop = CFRunLoopGetCurrent();
+
+  observeFullscreen();
+  observeActivateApplication();
+  waitUntilAccessibilityGranted();
+  handleFocusMaybeChanged();
+
+  // Start the RunLoop so that our AXObservers added by CFRunLoopAddSource
+  // work properly
+  CFRunLoopRun();
+
+  // Cleanup after the run loop has stopped
+  cleanupObservers();
 }
 
 void ow_start_hook(char *target_window_title, void *overlay_window_id) {
+  uv_mutex_lock(&hook_mutex);
+
+  if (hook_running) {
+    uv_mutex_unlock(&hook_mutex);
+    return;
+  }
+
+  // Resetting the structs to their initial state before starting
+  targetInfo = {.title = NULL,
+                .pid = -1,
+                .element = NULL,
+                .observer = NULL,
+                .isFocused = false,
+                .isFullscreen = false};
+  frontmostInfo = {
+      .pid = -1, .windowID = 0, .element = NULL, .observer = NULL};
+
   targetInfo.title = target_window_title;
   if (overlay_window_id != NULL) {
     // Cast to a weak pointer to avoid taking ownership of the view
@@ -694,18 +727,29 @@ void ow_start_hook(char *target_window_title, void *overlay_window_id) {
     overlayInfo.window = overlayWindow;
   }
 
+  hook_running = true;
   uv_thread_create(&hook_tid, hookThread, NULL);
+
+  uv_mutex_unlock(&hook_mutex);
 }
 
 void ow_stop_hook() {
+  uv_mutex_lock(&hook_mutex);
+
+  if (!hook_running) {
+    uv_mutex_unlock(&hook_mutex);
+    return;
+  }
+
   if (hook_thread_run_loop) {
     CFRunLoopStop(hook_thread_run_loop);
     hook_thread_run_loop = NULL;
   }
 
-  uv_thread_join(&hook_tid);
+  hook_running = false;
+  uv_mutex_unlock(&hook_mutex);
 
-  cleanupObservers();
+  uv_thread_join(&hook_tid);
 }
 
 void ow_activate_overlay() {
@@ -721,4 +765,8 @@ void ow_focus_target() {
   AXUIElementSetAttributeValue(app, kAXFrontmostAttribute, kCFBooleanTrue);
   AXUIElementRef window = targetInfo.element;
   AXUIElementSetAttributeValue(window, kAXMainAttribute, kCFBooleanTrue);
+}
+
+void ow_init() {
+  uv_mutex_init(&hook_mutex);
 }

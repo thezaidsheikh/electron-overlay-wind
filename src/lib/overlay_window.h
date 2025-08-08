@@ -60,6 +60,7 @@ struct ow_event {
 // Passed the title and a pointer to the platform-specific window ID.
 // Window ID format depends on platform, see
 // https://www.electronjs.org/docs/api/browser-window#wingetnativewindowhandle
+void ow_init();
 void ow_start_hook(char* target_window_title, void* overlay_window_id);
 
 void ow_stop_hook(void);
