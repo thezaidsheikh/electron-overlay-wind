@@ -40,6 +40,7 @@ export interface MoveresizeEvent {
   y: number;
   width: number;
   height: number;
+  windowLevel?: number;
 }
 
 export interface AttachOptions {
@@ -88,9 +89,9 @@ class OverlayControllerGlobal {
       this.targetHasFocus = true;
       if (this.electronWindow) {
         this.electronWindow.setIgnoreMouseEvents(true);
-        this.electronWindow.showInactive();
-        this.electronWindow.setAlwaysOnTop(true, "screen-saver");
+        this.updateWindowVisibility();
       }
+      console.log("attach", e);
       if (e.isFullscreen !== undefined) {
         this.handleFullscreen(e.isFullscreen);
       }
@@ -116,23 +117,13 @@ class OverlayControllerGlobal {
 
     this.events.on("blur", () => {
       this.targetHasFocus = false;
-
-      if (this.electronWindow && (isMac || (this.focusNext !== "overlay" && !this.electronWindow.isFocused()))) {
-        this.electronWindow.hide();
-      }
+      this.updateWindowVisibility();
     });
 
     this.events.on("focus", () => {
       this.focusNext = undefined;
       this.targetHasFocus = true;
-
-      if (this.electronWindow) {
-        this.electronWindow.setIgnoreMouseEvents(true);
-        if (!this.electronWindow.isVisible()) {
-          this.electronWindow.showInactive();
-          this.electronWindow.setAlwaysOnTop(true, "screen-saver");
-        }
-      }
+      this.updateWindowVisibility();
     });
   }
 
@@ -157,22 +148,67 @@ class OverlayControllerGlobal {
     }
   }
 
-  private updateOverlayBounds() {
-    let lastBounds = this.adjustBoundsForMacTitleBar(this.targetBounds);
-    if (lastBounds.width === 0 || lastBounds.height === 0) return;
+  private updateWindowVisibility() {
     if (!this.electronWindow) return;
 
-    if (process.platform === "win32") {
-      lastBounds = screen.screenToDipRect(this.electronWindow, this.targetBounds);
-    }
-    this.electronWindow.setBounds(lastBounds);
+    if (this.targetBounds.width > 0 && this.targetBounds.height > 0) {
+      if (this.targetHasFocus) {
+        // When target has focus, show overlay on top
+        this.electronWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+        this.electronWindow.setAlwaysOnTop(true, "screen-saver", 1);
+        this.electronWindow.setIgnoreMouseEvents(true);
+        this.electronWindow.showInactive();
+      } else {
+        // When target loses focus, move overlay behind
+        this.electronWindow.setAlwaysOnTop(false);
+        this.electronWindow.setVisibleOnAllWorkspaces(false);
+        this.electronWindow.setIgnoreMouseEvents(true);
 
-    // if moved to screen with different DPI, 2nd call to setBounds will correctly resize window
-    // dipRect must be recalculated as well
-    if (process.platform === "win32") {
-      lastBounds = screen.screenToDipRect(this.electronWindow, this.targetBounds);
-      this.electronWindow.setBounds(lastBounds);
+        // On macOS, we need to force the window to the back
+        if (process.platform === "darwin") {
+          // Create a new window to steal focus
+          const tempWindow = new BrowserWindow({
+            show: false,
+            width: 1,
+            height: 1,
+          });
+          tempWindow.showInactive();
+          tempWindow.close();
+        }
+      }
+    } else {
+      this.electronWindow.hide();
     }
+  }
+
+  private updateOverlayBounds() {
+    if (!this.electronWindow) return;
+
+    let { x, y, width, height } = this.targetBounds;
+
+    if (this.attachOptions.hasTitleBarOnMac && process.platform === "darwin") {
+      // Adjust for title bar if needed
+      y += this.macTitleBarHeight;
+      height -= this.macTitleBarHeight;
+    }
+
+    // Only update bounds if they've changed
+    const [currentX, currentY] = this.electronWindow.getPosition();
+    const [currentWidth, currentHeight] = this.electronWindow.getSize();
+
+    if (currentX !== x || currentY !== y || currentWidth !== width || currentHeight !== height) {
+      this.electronWindow.setBounds(
+        {
+          x: Math.round(x),
+          y: Math.round(y),
+          width: Math.max(1, Math.round(width)),
+          height: Math.max(1, Math.round(height)),
+        },
+        false
+      );
+    }
+
+    this.updateWindowVisibility();
   }
 
   private handler(e: unknown) {

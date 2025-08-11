@@ -57,7 +57,7 @@ function createWindow() {
 
   makeDemoInteractive();
 
-  OverlayController.attachByTitle(window, process.platform === "darwin" ? "Activity Monitor" : "Notepad", { hasTitleBarOnMac: false });
+  OverlayController.attachByTitle(window, process.platform === "darwin" ? "New Tab" : "Notepad", { hasTitleBarOnMac: false });
 }
 
 function makeDemoInteractive() {
