@@ -429,3 +429,7 @@ void ow_screenshot(uint8_t* out, uint32_t width, uint32_t height) {
   ReleaseDC(target_info.hwnd, dcSrc);
   DeleteObject(bmp);
 }
+
+void ow_init() {
+  // uv_mutex_init(&hook_mutex);
+}

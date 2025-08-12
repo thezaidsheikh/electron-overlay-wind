@@ -348,3 +348,7 @@ void ow_focus_target() {
   xcb_flush(x_conn);
   free(event);
 }
+
+void ow_init() {
+  // uv_mutex_init(&hook_mutex);
+}
