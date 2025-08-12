@@ -91,7 +91,6 @@ class OverlayControllerGlobal {
         this.electronWindow.setIgnoreMouseEvents(true);
         this.updateWindowVisibility();
       }
-      console.log("attach", e);
       if (e.isFullscreen !== undefined) {
         this.handleFullscreen(e.isFullscreen);
       }

@@ -58,6 +58,12 @@ function createWindow() {
   makeDemoInteractive();
 
   OverlayController.attachByTitle(window, process.platform === "darwin" ? "New Tab" : "Notepad", { hasTitleBarOnMac: false });
+  // setTimeout(() => {
+  //   OverlayController.stop();
+  //   setTimeout(() => {
+  //     OverlayController.attachByTitle(window, process.platform === "darwin" ? "Activity Monitor" : "Notepad", { hasTitleBarOnMac: false });
+  //   }, 2000);
+  // }, 3000);
 }
 
 function makeDemoInteractive() {
