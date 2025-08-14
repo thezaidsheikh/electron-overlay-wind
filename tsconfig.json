@@ -7,9 +7,12 @@
     "moduleResolution": "node",
     "sourceMap": true,
     "outDir": "dist",
-    "declaration": true
+    "declaration": true,
+    "allowJs": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "lib": ["dom", "ES2021"]
   },
-  "include": [
-    "src/**/*"
-  ]
+  "include": ["src/**/*", "src/**/*.js", "src/**/*.html"]
 }

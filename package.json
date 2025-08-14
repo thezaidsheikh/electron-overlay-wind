@@ -25,18 +25,20 @@
   "scripts": {
     "install": "node-gyp-build",
     "start:dev": "pnpm run build:dev && pnpm run demo:electron",
-    "build": "tsc",
-    "build:dev": "tsc --sourceMap",
-    "build:prod": "tsc --sourceMap false",
+    "build": "tsc && npm run copy:assets",
+    "build:dev": "tsc --sourceMap && npm run copy:assets",
+    "build:prod": "tsc --sourceMap false && npm run copy:assets",
     "clean": "rm -rf dist build",
+    "copy:assets": "mkdir -p dist/demo && cp -r src/demo/*.{html,js} dist/demo/ && cp -r src/demo/*.css dist/demo/ 2>/dev/null || :",
     "prebuild": "prebuildify --napi",
-    "demo:electron": "node-gyp rebuild && tsc && electron dist/demo/electron-demo.js",
+    "demo:electron": "node-gyp rebuild && npm run copy:assets && tsc && electron dist/demo/electron-demo.js",
     "deploy": "./scripts/deploy.sh"
   },
   "files": [
     "dist/index.d.ts",
     "dist/index.js",
     "dist/index.js.map",
+    "dist/demo",
     "binding.gyp",
     "src/lib",
     "prebuilds"

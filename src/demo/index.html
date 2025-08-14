@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Screen Share</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+    <style type="text/tailwindcss">
+      body {
+        font-family: "Inter", sans-serif;
+        background-color: #ffffff;
+      }
+      /* .window-container {
+        @apply rounded-xl bg-white shadow-lg;
+      } */
+      .top-bar {
+        @apply bg-[#e9ecef] px-6 py-4 rounded-t-xl flex items-center justify-between;
+      }
+      .top-bar .title {
+        @apply font-semibold text-gray-800;
+      }
+      .main-content {
+        @apply p-8;
+      }
+      .screen-card {
+        @apply border-2 border-gray-200 rounded-xl cursor-pointer transition-all duration-300 ease-in-out overflow-hidden;
+      }
+      .screen-card:hover {
+        @apply border-blue-500 ring-4 ring-blue-500/25;
+      }
+      .screen-card.active {
+        @apply border-blue-500 ring-4 ring-blue-500/25;
+      }
+      .screen-card img {
+        @apply w-full h-44 object-cover border-b border-gray-200;
+      }
+      .screen-card .card-body {
+        @apply p-4;
+      }
+      .screen-card .card-title {
+        @apply text-sm font-semibold text-gray-900 whitespace-nowrap overflow-hidden text-ellipsis;
+      }
+      .screen-card .card-text {
+        @apply text-xs text-gray-500;
+      }
+      .bottom-bar {
+        @apply px-8 py-4 border-t border-gray-200 flex justify-end bg-gray-50 rounded-b-xl;
+      }
+      .btn {
+        @apply px-4 py-2 rounded-md font-medium text-sm transition-colors;
+      }
+      .btn-primary {
+        @apply bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500;
+      }
+      .btn-primary:disabled {
+        @apply bg-gray-400 text-gray-600 cursor-not-allowed opacity-60;
+      }
+      .btn-secondary {
+        @apply bg-gray-200 text-gray-800 hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400;
+      }
+      .btn-secondary:disabled {
+        @apply bg-gray-300 text-gray-500 cursor-not-allowed opacity-60;
+      }
+    </style>
+  </head>
+  <body>
+    <div>
+      <div class="window-container w-full max-w-1xl">
+        <div class="bottom-bar">
+          <button id="stopSharingBtn" class="btn btn-secondary mr-2" onclick="stopSharing()" disabled>Stop</button>
+          <button id="startSharingBtn" class="btn btn-primary" onclick="startSharing()" disabled>Start</button>
+        </div>
+        <div class="main-content">
+          <h2 class="mb-6 text-xl font-semibold text-gray-800">Select a window or screen to share:</h2>
+          <div id="screens" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
+        </div>
+      </div>
+    </div>
+    <script src="./main.js"></script>
+  </body>
+</html>

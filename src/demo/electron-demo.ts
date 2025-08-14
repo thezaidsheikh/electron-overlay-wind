@@ -1,16 +1,62 @@
-import { app, BrowserWindow, globalShortcut } from "electron";
+import { app, BrowserWindow, desktopCapturer, globalShortcut, ipcMain } from "electron";
 import { OverlayController, OVERLAY_WINDOW_OPTS } from "../";
+import path = require("path");
+import url = require("url");
 
 // https://github.com/electron/electron/issues/25153
 app.disableHardwareAcceleration();
 
-let window: BrowserWindow;
+let mainWindow: BrowserWindow;
+let overlayWindow: BrowserWindow;
+const global: { sourceId: string; sourceName: string } = { sourceId: "", sourceName: "" };
 
 const toggleMouseKey = "CmdOrCtrl + J";
 const toggleShowKey = "CmdOrCtrl + K";
 
-function createWindow() {
-  window = new BrowserWindow({
+// Create the main window
+const createWindow = () => {
+  // Create the browser window.
+  mainWindow = new BrowserWindow({
+    width: 1000,
+    height: 600,
+    skipTaskbar: true,
+    resizable: false,
+    // movable: false,
+    acceptFirstMouse: false,
+    disableAutoHideCursor: true,
+    minimizable: false,
+    maximizable: false,
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true,
+      preload: path.join(__dirname, "preload.js"), // use a preload script
+    },
+  });
+
+  // and load the miniWindow.html of the app.
+  mainWindow.loadURL(
+    url.format({
+      pathname: path.join(__dirname, "index.html"),
+      protocol: "file:",
+      slashes: true,
+    })
+  );
+
+  // Open DevTools in development for debugging
+  // miniWindow.webContents.openDevTools({ mode: "detach", activate: false });
+
+  mainWindow.setContentProtection(true);
+  // Emitted when the window is closed.
+  mainWindow.on("closed", function () {
+    // Dereference the window object, usually you would store windows
+    // in an array if your app supports multi windows, this is the time
+    // when you should delete the corresponding element.
+    mainWindow.destroy();
+  });
+};
+
+function createOverlayWindow() {
+  overlayWindow = new BrowserWindow({
     width: 400,
     height: 300,
     webPreferences: {
@@ -20,7 +66,7 @@ function createWindow() {
     ...OVERLAY_WINDOW_OPTS,
   });
 
-  window.loadURL(`data:text/html;charset=utf-8,
+  overlayWindow.loadURL(`data:text/html;charset=utf-8,
     <head>
       <title>overlay-demo</title>
     </head>
@@ -57,7 +103,7 @@ function createWindow() {
 
   makeDemoInteractive();
 
-  OverlayController.attachByTitle(window, process.platform === "darwin" ? "New Tab" : "Notepad", { hasTitleBarOnMac: false });
+  OverlayController.attachByTitle(overlayWindow, process.platform === "darwin" ? global.sourceName : "Notepad", { hasTitleBarOnMac: false });
   // setTimeout(() => {
   //   OverlayController.stop();
   //   setTimeout(() => {
@@ -73,23 +119,23 @@ function makeDemoInteractive() {
     if (isInteractable) {
       isInteractable = false;
       OverlayController.focusTarget();
-      window.webContents.send("focus-change", false);
+      overlayWindow.webContents.send("focus-change", false);
     } else {
       isInteractable = true;
       OverlayController.activateOverlay();
-      window.webContents.send("focus-change", true);
+      overlayWindow.webContents.send("focus-change", true);
     }
   }
 
-  window.on("blur", () => {
+  overlayWindow.on("blur", () => {
     isInteractable = false;
-    window.webContents.send("focus-change", false);
+    overlayWindow.webContents.send("focus-change", false);
   });
 
   globalShortcut.register(toggleMouseKey, toggleOverlayState);
 
   globalShortcut.register(toggleShowKey, () => {
-    window.webContents.send("visibility-change", false);
+    overlayWindow.webContents.send("visibility-change", false);
   });
 }
 
@@ -98,4 +144,27 @@ app.on("ready", () => {
     createWindow,
     process.platform === "linux" ? 1000 : 0 // https://github.com/electron/electron/issues/16809
   );
+});
+
+ipcMain.on("CREATE_OVERLAY_WINDOW", async (event, data) => {
+  global.sourceId = data.sourceId;
+  global.sourceName = data.sourceName;
+  createOverlayWindow();
+  if (mainWindow) mainWindow.minimize();
+});
+
+ipcMain.on("STOP", () => {
+  OverlayController.stop();
+  if (mainWindow) mainWindow.show();
+});
+
+// Handle desktop capturer sources request
+ipcMain.handle("DESKTOP_CAPTURER_GET_SOURCES", async (event, options) => {
+  try {
+    const sources = await desktopCapturer.getSources(options);
+    return sources;
+  } catch (error) {
+    console.error("Error getting desktop sources:", error);
+    throw error;
+  }
 });
